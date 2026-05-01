@@ -7,451 +7,55 @@
     body {
       margin: 0;
       overflow: hidden;
-      background: #07110d;
+      background: #0e1a14;
       font-family: Arial, sans-serif;
     }
 
     #objective {
       position: fixed;
-      top: 20px;
-      left: 25px;
+      top: 18px;
+      left: 22px;
       color: #ffe680;
       font-size: 22px;
-      z-index: 10;
-      text-shadow: 0 0 8px black;
+      z-index: 20;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+      pointer-events: none;
     }
 
     #storyText {
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 40px;
+      bottom: 42px;
       text-align: center;
       color: white;
       font-size: 28px;
-      z-index: 10;
-      text-shadow: 0 0 10px black;
-      padding: 0 30px;
+      z-index: 20;
+      text-shadow: 0 0 14px rgba(0,0,0,0.95);
+      padding: 0 28px;
+      pointer-events: none;
     }
 
     #help {
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 8px;
+      bottom: 10px;
       text-align: center;
-      color: #cde8d0;
+      color: #d2e6d1;
       font-size: 14px;
-      z-index: 10;
-      text-shadow: 0 0 8px black;
-      opacity: 0.8;
+      z-index: 20;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9);
+      opacity: 0.85;
+      pointer-events: none;
     }
   </style>
 </head>
-
 <body>
   <div id="objective">Objective: Wake up.</div>
-  <div id="storyText">Loading baby bear forest...</div>
-  <div id="help">WASD / Arrow Keys = Move • E = Inspect Clues</div>
+  <div id="storyText">Loading forest...</div>
+  <div id="help">WASD / Arrow Keys = Move • E = Inspect</div>
 
-  <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
-
-    const objectiveEl = document.getElementById("objective");
-    const storyEl = document.getElementById("storyText");
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#14231b");
-    scene.fog = new THREE.Fog("#14231b", 16, 85);
-
-    const camera = new THREE.PerspectiveCamera(
-      58,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      500
-    );
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-
-    const sun = new THREE.DirectionalLight("#ffe7b0", 2.6);
-    sun.position.set(-18, 32, 18);
-    sun.castShadow = true;
-    scene.add(sun);
-
-    const ambient = new THREE.AmbientLight("#8fb6ff", 0.65);
-    scene.add(ambient);
-
-    const warmFill = new THREE.HemisphereLight("#c8e9ff", "#26381f", 1.1);
-    scene.add(warmFill);
-
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(180, 180, 24, 24),
-      new THREE.MeshStandardMaterial({ color: "#315735", roughness: 1 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Soft meadow patches
-    function makeGrassPatch(x, z, color, scale) {
-      const patch = new THREE.Mesh(
-        new THREE.CircleGeometry(2.8 * scale, 18),
-        new THREE.MeshStandardMaterial({ color, roughness: 1 })
-      );
-      patch.rotation.x = -Math.PI / 2;
-      patch.position.set(x, 0.012, z);
-      scene.add(patch);
-    }
-
-    for (let i = 0; i < 80; i++) {
-      makeGrassPatch(
-        (Math.random() - 0.5) * 150,
-        (Math.random() - 0.5) * 150,
-        Math.random() > 0.5 ? "#3e6b3e" : "#496f35",
-        0.5 + Math.random() * 1.4
-      );
-    }
-
-    // Baby bear, facing forward toward -Z.
-    const bear = new THREE.Group();
-
-    const brown = new THREE.MeshStandardMaterial({ color: "#7a4b2a", roughness: 0.85 });
-    const lightBrown = new THREE.MeshStandardMaterial({ color: "#9a6538", roughness: 0.85 });
-    const darkBrown = new THREE.MeshStandardMaterial({ color: "#4a2b19", roughness: 0.85 });
-    const black = new THREE.MeshStandardMaterial({ color: "#111111", roughness: 0.5 });
-
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.68, 32, 20), brown);
-    body.scale.set(1.15, 0.8, 1.45);
-    body.position.y = 0.62;
-    body.castShadow = true;
-    bear.add(body);
-
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.46, 32, 20), lightBrown);
-    head.position.set(0, 1.05, -0.72);
-    head.castShadow = true;
-    bear.add(head);
-
-    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 14), new THREE.MeshStandardMaterial({ color: "#b9824d" }));
-    snout.scale.set(1.05, 0.75, 0.85);
-    snout.position.set(0, 0.98, -1.08);
-    snout.castShadow = true;
-    bear.add(snout);
-
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 10), black);
-    nose.scale.set(1.15, 0.75, 0.8);
-    nose.position.set(0, 1.02, -1.26);
-    bear.add(nose);
-
-    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 10), black);
-    leftEye.position.set(-0.16, 1.18, -1.06);
-    bear.add(leftEye);
-
-    const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 10), black);
-    rightEye.position.set(0.16, 1.18, -1.06);
-    bear.add(rightEye);
-
-    const earGeo = new THREE.SphereGeometry(0.17, 18, 12);
-
-    const leftEar = new THREE.Mesh(earGeo, darkBrown);
-    leftEar.position.set(-0.31, 1.38, -0.7);
-    leftEar.castShadow = true;
-    bear.add(leftEar);
-
-    const rightEar = new THREE.Mesh(earGeo, darkBrown);
-    rightEar.position.set(0.31, 1.38, -0.7);
-    rightEar.castShadow = true;
-    bear.add(rightEar);
-
-    function makeLeg(x, z) {
-      const leg = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 12), darkBrown);
-      leg.scale.set(0.9, 0.6, 1.2);
-      leg.position.set(x, 0.18, z);
-      leg.castShadow = true;
-      bear.add(leg);
-      return leg;
-    }
-
-    makeLeg(-0.35, -0.42);
-    makeLeg(0.35, -0.42);
-    makeLeg(-0.35, 0.45);
-    makeLeg(0.35, 0.45);
-
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 10), darkBrown);
-    tail.position.set(0, 0.66, 0.92);
-    tail.castShadow = true;
-    bear.add(tail);
-
-    bear.position.set(0, 0, 0);
-    scene.add(bear);
-
-    // Den / broken home area
-    function makeRock(x, z, scale = 1) {
-      const rock = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(0.8 * scale, 0),
-        new THREE.MeshStandardMaterial({ color: "#59645b", roughness: 1 })
-      );
-      rock.position.set(x, 0.35 * scale, z);
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.scale.set(1.2, 0.65, 1);
-      rock.castShadow = true;
-      rock.receiveShadow = true;
-      scene.add(rock);
-    }
-
-    makeRock(-2.2, -2.5, 1.3);
-    makeRock(-3.0, -1.2, 0.9);
-    makeRock(2.4, -2.0, 1.1);
-
-    // Forest trees
-    function makeTree(x, z, scale = 1) {
-      const tree = new THREE.Group();
-
-      const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22 * scale, 0.36 * scale, 4.2 * scale, 10),
-        new THREE.MeshStandardMaterial({ color: "#4a2d1b", roughness: 1 })
-      );
-      trunk.position.y = 2.1 * scale;
-      trunk.castShadow = true;
-      tree.add(trunk);
-
-      const leafColor = Math.random() > 0.5 ? "#245f38" : "#2d7042";
-
-      const leaves1 = new THREE.Mesh(
-        new THREE.ConeGeometry(1.7 * scale, 3.2 * scale, 12),
-        new THREE.MeshStandardMaterial({ color: leafColor, roughness: 1 })
-      );
-      leaves1.position.y = 4.4 * scale;
-      leaves1.castShadow = true;
-      tree.add(leaves1);
-
-      const leaves2 = new THREE.Mesh(
-        new THREE.ConeGeometry(1.25 * scale, 2.8 * scale, 12),
-        new THREE.MeshStandardMaterial({ color: "#2f7b48", roughness: 1 })
-      );
-      leaves2.position.y = 5.9 * scale;
-      leaves2.castShadow = true;
-      tree.add(leaves2);
-
-      tree.position.set(x, 0, z);
-      scene.add(tree);
-    }
-
-    for (let i = 0; i < 130; i++) {
-      const x = (Math.random() - 0.5) * 155;
-      const z = (Math.random() - 0.5) * 155;
-
-      if (Math.hypot(x, z) < 9) continue;
-
-      makeTree(x, z, 0.75 + Math.random() * 1.3);
-    }
-
-    // Glowing clue objects
-    function makeClue(name, x, z, color) {
-      const group = new THREE.Group();
-
-      const clue = new THREE.Mesh(
-        new THREE.SphereGeometry(0.35, 24, 16),
-        new THREE.MeshStandardMaterial({
-          color: color,
-          emissive: color,
-          emissiveIntensity: 1.8
-        })
-      );
-      clue.name = name;
-      clue.position.y = 0.65;
-      group.add(clue);
-
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.62, 0.035, 8, 32),
-        new THREE.MeshBasicMaterial({ color: color })
-      );
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = 0.05;
-      group.add(ring);
-
-      const light = new THREE.PointLight(color, 3, 9);
-      light.position.y = 1.1;
-      group.add(light);
-
-      group.name = name;
-      group.position.set(x, 0, z);
-      scene.add(group);
-
-      return group;
-    }
-
-    const clues = [
-      makeClue("claw marks", 4, 3, "#ffe680"),
-      makeClue("torn net", -5, 10, "#82d8ff"),
-      makeClue("tire tracks", 2, 20, "#ff9a6b")
-    ];
-
-    // Firefly-like glow particles
-    const fireflies = [];
-    const fireflyMat = new THREE.MeshBasicMaterial({ color: "#ffe680" });
-
-    for (let i = 0; i < 35; i++) {
-      const f = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), fireflyMat);
-      f.position.set((Math.random() - 0.5) * 35, 1 + Math.random() * 3, -5 + Math.random() * 35);
-      scene.add(f);
-      fireflies.push({ mesh: f, baseY: f.position.y, phase: Math.random() * 10 });
-    }
-
-    let clueStep = 0;
-    let storyTimer = 0;
-    let introDone = false;
-    const keys = {};
-
-    window.addEventListener("keydown", (e) => {
-      keys[e.key.toLowerCase()] = true;
-
-      if (e.key.toLowerCase() === "e") {
-        tryInteract();
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
-
-    function setStory(text) {
-      storyEl.textContent = text;
-    }
-
-    function setObjective(text) {
-      objectiveEl.textContent = "Objective: " + text;
-    }
-
-    function tryInteract() {
-      if (!introDone) return;
-      if (clueStep >= clues.length) return;
-
-      const clue = clues[clueStep];
-      const distance = bear.position.distanceTo(clue.position);
-
-      if (distance > 2.7) return;
-
-      if (clueStep === 0) {
-        setStory("Thunder. Heavy footsteps. Dad roaring. Mom pushed you into the roots.");
-        setObjective("Find something that smells like Mom.");
-      }
-
-      if (clueStep === 1) {
-        setStory("Mom was here. Her scent is trapped in the torn rope.");
-        setObjective("Follow Mom's scent deeper into the forest.");
-      }
-
-      if (clueStep === 2) {
-        setStory("The ground smells like humans. Mom did not leave. Mom was taken.");
-        setObjective("Find where the humans went.");
-      }
-
-      clue.visible = false;
-      clueStep++;
-    }
-
-    function updateIntro(dt) {
-      if (introDone) return;
-
-      storyTimer += dt;
-
-      if (storyTimer < 2) {
-        setStory("The forest is quiet...");
-      }
-
-      if (storyTimer > 2 && storyTimer < 5) {
-        setStory("Mom?");
-      }
-
-      if (storyTimer >= 5) {
-        introDone = true;
-        setStory("");
-        setObjective("Look around the broken den.");
-      }
-    }
-
-    function updateMovement(dt) {
-      if (!introDone) return;
-
-      let moveX = 0;
-      let moveZ = 0;
-
-      if (keys["w"] || keys["arrowup"]) moveZ -= 1;
-      if (keys["s"] || keys["arrowdown"]) moveZ += 1;
-      if (keys["a"] || keys["arrowleft"]) moveX -= 1;
-      if (keys["d"] || keys["arrowright"]) moveX += 1;
-
-      const move = new THREE.Vector3(moveX, 0, moveZ);
-
-      if (move.length() > 0) {
-        move.normalize();
-        bear.position.add(move.multiplyScalar(5.2 * dt));
-
-        // Correct facing: head points toward movement.
-        const angle = Math.atan2(moveX, moveZ);
-        bear.rotation.y = angle + Math.PI;
-      }
-    }
-
-    function updateCluePrompt() {
-      if (!introDone || clueStep >= clues.length) return;
-
-      const clue = clues[clueStep];
-      const distance = bear.position.distanceTo(clue.position);
-
-      if (distance <= 2.7) {
-        setStory("Press E to inspect the " + clue.name + ".");
-      } else if (storyEl.textContent.startsWith("Press E")) {
-        setStory("");
-      }
-    }
-
-    function updateCamera(dt) {
-      const behind = new THREE.Vector3(0, 4.2, 8.5);
-      const targetPosition = bear.position.clone().add(behind);
-
-      camera.position.lerp(targetPosition, 1 - Math.pow(0.001, dt));
-      camera.lookAt(bear.position.x, bear.position.y + 0.9, bear.position.z - 0.7);
-    }
-
-    let lastTime = performance.now();
-
-    function animate(now) {
-      const dt = Math.min(0.033, (now - lastTime) / 1000);
-      lastTime = now;
-
-      updateIntro(dt);
-      updateMovement(dt);
-      updateCluePrompt();
-      updateCamera(dt);
-
-      for (const clue of clues) {
-        clue.rotation.y += dt * 1.3;
-        clue.children[0].position.y = 0.65 + Math.sin(now * 0.003 + clue.position.x) * 0.08;
-      }
-
-      for (const f of fireflies) {
-        f.phase += dt;
-        f.mesh.position.y = f.baseY + Math.sin(f.phase * 2) * 0.25;
-        f.mesh.position.x += Math.sin(f.phase * 1.3) * dt * 0.18;
-        f.mesh.position.z += Math.cos(f.phase * 1.1) * dt * 0.18;
-      }
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-
-    requestAnimationFrame(animate);
-
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+  <script type="module" src="./game.js"></script>
 </body>
 </html>
