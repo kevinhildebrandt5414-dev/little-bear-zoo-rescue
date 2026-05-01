@@ -2,67 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Baby Bear Forest</title>
-
+  <title>Little Bear Lost</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: #07110d;
-      font-family: Arial, sans-serif;
-    }
-
-    #storyText {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 40px;
-      text-align: center;
-      color: white;
-      font-size: 28px;
-      text-shadow: 0 0 10px black;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    #objective {
-      position: fixed;
-      top: 20px;
-      left: 25px;
-      color: #ffe680;
-      font-size: 20px;
-      text-shadow: 0 0 8px black;
-      pointer-events: none;
-      z-index: 10;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="objective">Objective: Wake up.</div>
-  <div id="storyText">The forest is quiet...</div>
-
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.165.0/build/three.module.js"
-    }
-  }
-  </script>
-
-  <script type="module" src="game.js"></script>
-</body>
-</html>
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Baby Bear Forest Test</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
       font-family: Arial, sans-serif;
     }
 
@@ -86,6 +31,20 @@
       font-size: 28px;
       z-index: 10;
       text-shadow: 0 0 10px black;
+      padding: 0 30px;
+    }
+
+    #help {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      text-align: center;
+      color: #cde8d0;
+      font-size: 14px;
+      z-index: 10;
+      text-shadow: 0 0 8px black;
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -93,6 +52,7 @@
 <body>
   <div id="objective">Objective: Wake up.</div>
   <div id="storyText">Loading baby bear forest...</div>
+  <div id="help">WASD / Arrow Keys = Move • E = Inspect Clues</div>
 
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
@@ -101,111 +61,227 @@
     const storyEl = document.getElementById("storyText");
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#101d16");
-    scene.fog = new THREE.Fog("#101d16", 12, 70);
+    scene.background = new THREE.Color("#14231b");
+    scene.fog = new THREE.Fog("#14231b", 16, 85);
 
     const camera = new THREE.PerspectiveCamera(
-      60,
+      58,
       window.innerWidth / window.innerHeight,
       0.1,
       500
     );
-    camera.position.set(0, 6, 10);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    const sun = new THREE.DirectionalLight("#fff0c2", 2.2);
-    sun.position.set(10, 20, 8);
+    const sun = new THREE.DirectionalLight("#ffe7b0", 2.6);
+    sun.position.set(-18, 32, 18);
+    sun.castShadow = true;
     scene.add(sun);
 
-    const ambient = new THREE.AmbientLight("#9cc7ff", 0.8);
+    const ambient = new THREE.AmbientLight("#8fb6ff", 0.65);
     scene.add(ambient);
 
+    const warmFill = new THREE.HemisphereLight("#c8e9ff", "#26381f", 1.1);
+    scene.add(warmFill);
+
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(160, 160),
-      new THREE.MeshStandardMaterial({ color: "#27452a" })
+      new THREE.PlaneGeometry(180, 180, 24, 24),
+      new THREE.MeshStandardMaterial({ color: "#315735", roughness: 1 })
     );
     ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
     scene.add(ground);
 
+    // Soft meadow patches
+    function makeGrassPatch(x, z, color, scale) {
+      const patch = new THREE.Mesh(
+        new THREE.CircleGeometry(2.8 * scale, 18),
+        new THREE.MeshStandardMaterial({ color, roughness: 1 })
+      );
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set(x, 0.012, z);
+      scene.add(patch);
+    }
+
+    for (let i = 0; i < 80; i++) {
+      makeGrassPatch(
+        (Math.random() - 0.5) * 150,
+        (Math.random() - 0.5) * 150,
+        Math.random() > 0.5 ? "#3e6b3e" : "#496f35",
+        0.5 + Math.random() * 1.4
+      );
+    }
+
+    // Baby bear, facing forward toward -Z.
     const bear = new THREE.Group();
 
-    const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.65, 24, 16),
-      new THREE.MeshStandardMaterial({ color: "#7a4b2a" })
-    );
-    body.scale.set(1.2, 0.8, 1.5);
+    const brown = new THREE.MeshStandardMaterial({ color: "#7a4b2a", roughness: 0.85 });
+    const lightBrown = new THREE.MeshStandardMaterial({ color: "#9a6538", roughness: 0.85 });
+    const darkBrown = new THREE.MeshStandardMaterial({ color: "#4a2b19", roughness: 0.85 });
+    const black = new THREE.MeshStandardMaterial({ color: "#111111", roughness: 0.5 });
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.68, 32, 20), brown);
+    body.scale.set(1.15, 0.8, 1.45);
+    body.position.y = 0.62;
+    body.castShadow = true;
     bear.add(body);
 
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.45, 24, 16),
-      new THREE.MeshStandardMaterial({ color: "#8a5630" })
-    );
-    head.position.set(0, 0.45, -0.65);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.46, 32, 20), lightBrown);
+    head.position.set(0, 1.05, -0.72);
+    head.castShadow = true;
     bear.add(head);
 
-    const earGeo = new THREE.SphereGeometry(0.16, 16, 12);
-    const earMat = new THREE.MeshStandardMaterial({ color: "#6d3f23" });
+    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 14), new THREE.MeshStandardMaterial({ color: "#b9824d" }));
+    snout.scale.set(1.05, 0.75, 0.85);
+    snout.position.set(0, 0.98, -1.08);
+    snout.castShadow = true;
+    bear.add(snout);
 
-    const leftEar = new THREE.Mesh(earGeo, earMat);
-    leftEar.position.set(-0.28, 0.78, -0.7);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 10), black);
+    nose.scale.set(1.15, 0.75, 0.8);
+    nose.position.set(0, 1.02, -1.26);
+    bear.add(nose);
+
+    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 10), black);
+    leftEye.position.set(-0.16, 1.18, -1.06);
+    bear.add(leftEye);
+
+    const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 10), black);
+    rightEye.position.set(0.16, 1.18, -1.06);
+    bear.add(rightEye);
+
+    const earGeo = new THREE.SphereGeometry(0.17, 18, 12);
+
+    const leftEar = new THREE.Mesh(earGeo, darkBrown);
+    leftEar.position.set(-0.31, 1.38, -0.7);
+    leftEar.castShadow = true;
     bear.add(leftEar);
 
-    const rightEar = new THREE.Mesh(earGeo, earMat);
-    rightEar.position.set(0.28, 0.78, -0.7);
+    const rightEar = new THREE.Mesh(earGeo, darkBrown);
+    rightEar.position.set(0.31, 1.38, -0.7);
+    rightEar.castShadow = true;
     bear.add(rightEar);
 
-    bear.position.set(0, 0.65, 0);
+    function makeLeg(x, z) {
+      const leg = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 12), darkBrown);
+      leg.scale.set(0.9, 0.6, 1.2);
+      leg.position.set(x, 0.18, z);
+      leg.castShadow = true;
+      bear.add(leg);
+      return leg;
+    }
+
+    makeLeg(-0.35, -0.42);
+    makeLeg(0.35, -0.42);
+    makeLeg(-0.35, 0.45);
+    makeLeg(0.35, 0.45);
+
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 10), darkBrown);
+    tail.position.set(0, 0.66, 0.92);
+    tail.castShadow = true;
+    bear.add(tail);
+
+    bear.position.set(0, 0, 0);
     scene.add(bear);
 
+    // Den / broken home area
+    function makeRock(x, z, scale = 1) {
+      const rock = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.8 * scale, 0),
+        new THREE.MeshStandardMaterial({ color: "#59645b", roughness: 1 })
+      );
+      rock.position.set(x, 0.35 * scale, z);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.scale.set(1.2, 0.65, 1);
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+      scene.add(rock);
+    }
+
+    makeRock(-2.2, -2.5, 1.3);
+    makeRock(-3.0, -1.2, 0.9);
+    makeRock(2.4, -2.0, 1.1);
+
+    // Forest trees
     function makeTree(x, z, scale = 1) {
       const tree = new THREE.Group();
 
       const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25 * scale, 0.35 * scale, 4 * scale, 10),
-        new THREE.MeshStandardMaterial({ color: "#4a2d1b" })
+        new THREE.CylinderGeometry(0.22 * scale, 0.36 * scale, 4.2 * scale, 10),
+        new THREE.MeshStandardMaterial({ color: "#4a2d1b", roughness: 1 })
       );
-      trunk.position.y = 2 * scale;
+      trunk.position.y = 2.1 * scale;
+      trunk.castShadow = true;
       tree.add(trunk);
 
-      const leaves = new THREE.Mesh(
-        new THREE.ConeGeometry(1.6 * scale, 4 * scale, 12),
-        new THREE.MeshStandardMaterial({ color: "#1f5a34" })
+      const leafColor = Math.random() > 0.5 ? "#245f38" : "#2d7042";
+
+      const leaves1 = new THREE.Mesh(
+        new THREE.ConeGeometry(1.7 * scale, 3.2 * scale, 12),
+        new THREE.MeshStandardMaterial({ color: leafColor, roughness: 1 })
       );
-      leaves.position.y = 5 * scale;
-      tree.add(leaves);
+      leaves1.position.y = 4.4 * scale;
+      leaves1.castShadow = true;
+      tree.add(leaves1);
+
+      const leaves2 = new THREE.Mesh(
+        new THREE.ConeGeometry(1.25 * scale, 2.8 * scale, 12),
+        new THREE.MeshStandardMaterial({ color: "#2f7b48", roughness: 1 })
+      );
+      leaves2.position.y = 5.9 * scale;
+      leaves2.castShadow = true;
+      tree.add(leaves2);
 
       tree.position.set(x, 0, z);
       scene.add(tree);
     }
 
-    for (let i = 0; i < 90; i++) {
-      const x = (Math.random() - 0.5) * 130;
-      const z = (Math.random() - 0.5) * 130;
-      if (Math.hypot(x, z) < 8) continue;
-      makeTree(x, z, 0.7 + Math.random() * 1.1);
+    for (let i = 0; i < 130; i++) {
+      const x = (Math.random() - 0.5) * 155;
+      const z = (Math.random() - 0.5) * 155;
+
+      if (Math.hypot(x, z) < 9) continue;
+
+      makeTree(x, z, 0.75 + Math.random() * 1.3);
     }
 
+    // Glowing clue objects
     function makeClue(name, x, z, color) {
+      const group = new THREE.Group();
+
       const clue = new THREE.Mesh(
         new THREE.SphereGeometry(0.35, 24, 16),
         new THREE.MeshStandardMaterial({
           color: color,
           emissive: color,
-          emissiveIntensity: 1.5
+          emissiveIntensity: 1.8
         })
       );
       clue.name = name;
-      clue.position.set(x, 0.45, z);
-      scene.add(clue);
+      clue.position.y = 0.65;
+      group.add(clue);
 
-      const light = new THREE.PointLight(color, 2.5, 8);
-      light.position.set(x, 1.2, z);
-      scene.add(light);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.62, 0.035, 8, 32),
+        new THREE.MeshBasicMaterial({ color: color })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.05;
+      group.add(ring);
 
-      return clue;
+      const light = new THREE.PointLight(color, 3, 9);
+      light.position.y = 1.1;
+      group.add(light);
+
+      group.name = name;
+      group.position.set(x, 0, z);
+      scene.add(group);
+
+      return group;
     }
 
     const clues = [
@@ -213,6 +289,17 @@
       makeClue("torn net", -5, 10, "#82d8ff"),
       makeClue("tire tracks", 2, 20, "#ff9a6b")
     ];
+
+    // Firefly-like glow particles
+    const fireflies = [];
+    const fireflyMat = new THREE.MeshBasicMaterial({ color: "#ffe680" });
+
+    for (let i = 0; i < 35; i++) {
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), fireflyMat);
+      f.position.set((Math.random() - 0.5) * 35, 1 + Math.random() * 3, -5 + Math.random() * 35);
+      scene.add(f);
+      fireflies.push({ mesh: f, baseY: f.position.y, phase: Math.random() * 10 });
+    }
 
     let clueStep = 0;
     let storyTimer = 0;
@@ -246,7 +333,7 @@
       const clue = clues[clueStep];
       const distance = bear.position.distanceTo(clue.position);
 
-      if (distance > 2.3) return;
+      if (distance > 2.7) return;
 
       if (clueStep === 0) {
         setStory("Thunder. Heavy footsteps. Dad roaring. Mom pushed you into the roots.");
@@ -271,6 +358,10 @@
       if (introDone) return;
 
       storyTimer += dt;
+
+      if (storyTimer < 2) {
+        setStory("The forest is quiet...");
+      }
 
       if (storyTimer > 2 && storyTimer < 5) {
         setStory("Mom?");
@@ -298,10 +389,11 @@
 
       if (move.length() > 0) {
         move.normalize();
-        bear.position.add(move.multiplyScalar(5 * dt));
+        bear.position.add(move.multiplyScalar(5.2 * dt));
 
+        // Correct facing: head points toward movement.
         const angle = Math.atan2(moveX, moveZ);
-        bear.rotation.y = angle;
+        bear.rotation.y = angle + Math.PI;
       }
     }
 
@@ -311,7 +403,7 @@
       const clue = clues[clueStep];
       const distance = bear.position.distanceTo(clue.position);
 
-      if (distance <= 2.3) {
+      if (distance <= 2.7) {
         setStory("Press E to inspect the " + clue.name + ".");
       } else if (storyEl.textContent.startsWith("Press E")) {
         setStory("");
@@ -319,14 +411,11 @@
     }
 
     function updateCamera(dt) {
-      const cameraTarget = new THREE.Vector3(
-        bear.position.x,
-        bear.position.y + 5,
-        bear.position.z + 9
-      );
+      const behind = new THREE.Vector3(0, 4.2, 8.5);
+      const targetPosition = bear.position.clone().add(behind);
 
-      camera.position.lerp(cameraTarget, 1 - Math.pow(0.001, dt));
-      camera.lookAt(bear.position.x, bear.position.y + 0.8, bear.position.z);
+      camera.position.lerp(targetPosition, 1 - Math.pow(0.001, dt));
+      camera.lookAt(bear.position.x, bear.position.y + 0.9, bear.position.z - 0.7);
     }
 
     let lastTime = performance.now();
@@ -341,8 +430,15 @@
       updateCamera(dt);
 
       for (const clue of clues) {
-        clue.rotation.y += dt * 1.5;
-        clue.position.y = 0.45 + Math.sin(now * 0.003 + clue.position.x) * 0.08;
+        clue.rotation.y += dt * 1.3;
+        clue.children[0].position.y = 0.65 + Math.sin(now * 0.003 + clue.position.x) * 0.08;
+      }
+
+      for (const f of fireflies) {
+        f.phase += dt;
+        f.mesh.position.y = f.baseY + Math.sin(f.phase * 2) * 0.25;
+        f.mesh.position.x += Math.sin(f.phase * 1.3) * dt * 0.18;
+        f.mesh.position.z += Math.cos(f.phase * 1.1) * dt * 0.18;
       }
 
       renderer.render(scene, camera);
